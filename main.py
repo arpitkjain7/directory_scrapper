@@ -2,7 +2,7 @@ import pandas as pd
 import argparse
 import os
 from datetime import datetime
-from web_scraper import Extract_Data, login
+from web_scraper import Extract_Data
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-s", "--searchspec", required=True, help="search parameter")
@@ -24,7 +24,15 @@ out_data = Extract_Data(
 # updated_list.append([f"+{item[0]}", item[1], file_path, comments])
 print(f"{out_data=}")
 df = pd.DataFrame(
-    out_data, columns=["Name", "City", "State", "Contact Number", "Search parameter"]
+    out_data,
+    columns=[
+        "Name",
+        "City",
+        "State",
+        "Contact Number Primary",
+        "Contact Number Secondary",
+        "Search parameter",
+    ],
 )
 # print(f"{updated_df}")
 df.to_csv(os.path.join("output", f"{batch_id}.csv"), index=False, header=True)
