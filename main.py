@@ -40,6 +40,7 @@ df = pd.DataFrame(
         "Contact Number Primary",
         "Contact Number Secondary",
         "Search parameter",
+        "Page Number",
     ],
 )
 # print(f"{updated_df}")

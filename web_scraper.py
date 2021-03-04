@@ -141,7 +141,7 @@ def get_phone_number(driver):
     return shop_phone_number_1, shop_phone_number_2
 
 
-def Extract_Data(search_param: str, batch_id: str, start_page: int = 0, headless=False):
+def Extract_Data(search_param: str, batch_id: str, start_page=1, headless=False):
     options = Options()
     # options.add_argument("--incognito")
     if headless:
@@ -151,13 +151,19 @@ def Extract_Data(search_param: str, batch_id: str, start_page: int = 0, headless
         chrome_options=options,
     )
     search_data(driver, search_param)
-    if int(start_page) > 0:
-        navigate_to_start_page(driver, int(start_page))
+    base_url = driver.current_url
+    if int(start_page) > 1:
+        new_url = base_url + f"&page={start_page}"
+        # navigate_to_start_page(driver, int(start_page))
+        driver.get(new_url)
+        time.sleep(5)
     shop_data = []
     isNext = True
     while isNext:
         url = driver.current_url
+        print(url)
         for i in range(1, 13):
+            page_num = url.split("page=")[-1]
             shop_name, shop_city, shop_state = get_basic_details(driver, i)
             shop_phone_number_1, shop_phone_number_2 = get_phone_number(driver)
             shop_data.append(
@@ -168,6 +174,7 @@ def Extract_Data(search_param: str, batch_id: str, start_page: int = 0, headless
                     shop_phone_number_1,
                     shop_phone_number_2,
                     search_param,
+                    page_num,
                 ]
             )
             # driver.back()
