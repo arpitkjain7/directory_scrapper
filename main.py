@@ -9,6 +9,11 @@ ap.add_argument("-s", "--searchspec", required=True, help="search parameter")
 ap.add_argument(
     "-a", "--async", required=False, help="headless mode == True, else False"
 )
+ap.add_argument(
+    "-startpage",
+    required=False,
+    help="give the starting page of the seach. If left blank, extraction will start from page 1",
+)
 args = vars(ap.parse_args())
 batch_id = str(int(datetime.now().timestamp() * 1000))
 # driver = login(batch_id=batch_id, headless=args["async"])
@@ -19,7 +24,10 @@ batch_id = str(int(datetime.now().timestamp() * 1000))
 # for item in user_list:
 #     print(f"{item[0]=}")
 out_data = Extract_Data(
-    search_param=args["searchspec"], batch_id=batch_id, headless=args["async"]
+    search_param=args["searchspec"],
+    batch_id=batch_id,
+    start_page=args["startpage"],
+    headless=args["async"],
 )
 # updated_list.append([f"+{item[0]}", item[1], file_path, comments])
 print(f"{out_data=}")

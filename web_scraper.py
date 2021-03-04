@@ -12,6 +12,54 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.action_chains import ActionChains
 
 
+def search_data(driver, search_param):
+    driver.get("https://www.deldure.com/")
+    search_bar = WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable(
+            (
+                By.XPATH,
+                "//input[@placeholder='Search for Business Listing']",
+            )
+        )
+    )
+    search_bar.send_keys(search_param)
+    search_button = WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable(
+            (
+                By.XPATH,
+                "//input[@placeholder='Search for Business Listing']/following-sibling::input",
+            )
+        )
+    )
+    search_button.send_keys("\n")
+    time.sleep(5)
+    search_result = WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable(
+            (
+                By.XPATH,
+                "//div[@id='searchHeader']",
+            )
+        )
+    )
+    search_output = search_result.text
+    print(search_output)
+
+
+def navigate_to_start_page(driver, start_page):
+    for i in range(1, start_page):
+        next_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable(
+                (
+                    By.XPATH,
+                    "//a[text()='Next']",
+                )
+            )
+        )
+        next_button.send_keys("\n")
+        print(f"Navigating to page number : {i+1}")
+        time.sleep(5)
+
+
 def get_basic_details(driver, idx):
     shop_name = driver.find_element_by_xpath(
         f"//div[@id='searchResults']/div[{idx}]/div[1]"
@@ -30,6 +78,8 @@ def get_basic_details(driver, idx):
 
 def get_phone_number(driver):
     try:
+        shop_phone_number_1 = None
+        shop_phone_number_2 = None
         view_phone_number_button = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable(
                 (
@@ -72,66 +122,38 @@ def get_phone_number(driver):
         driver.find_element_by_xpath(
             "//span[text()='Fill this form with your correct details to view phone numbers']/following-sibling::input[@value='Submit']"
         ).send_keys("\n")
-        shop_phone_number = []
         shop_phone_number_1 = driver.find_element_by_xpath(
             "//div[@id='phoneNumbers']/a"
         ).text
         print(shop_phone_number_1)
-        shop_phone_number_2 = None
     except:
-        pass
+        return shop_phone_number_1, shop_phone_number_2
     try:
         shop_phone_number_2 = driver.find_element_by_xpath(
             "//div[@id='phoneNumbers']/a/following-sibling::a"
         ).text
         print(shop_phone_number_2)
     except:
-        pass
+        return shop_phone_number_1, shop_phone_number_2
     # for value in shop_phone_number_list:
     #     shop_phone_number.append(value.text)
     #     print(shop_phone_number)
     return shop_phone_number_1, shop_phone_number_2
 
 
-def Extract_Data(search_param: str, batch_id: str, headless=False):
+def Extract_Data(search_param: str, batch_id: str, start_page: int = 0, headless=False):
     options = Options()
+    # options.add_argument("--incognito")
     if headless:
         options.add_argument("--headless")
     driver = webdriver.Chrome(
         "/Users/arpitkjain/Desktop/Data/POC/google_scrapper/chromedriver",
         chrome_options=options,
     )
-    driver.get("https://www.deldure.com/")
-    search_bar = WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable(
-            (
-                By.XPATH,
-                "//input[@placeholder='Search for Business Listing']",
-            )
-        )
-    )
-    search_bar.send_keys(search_param)
-    search_button = WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable(
-            (
-                By.XPATH,
-                "//input[@placeholder='Search for Business Listing']/following-sibling::input",
-            )
-        )
-    )
-    search_button.send_keys("\n")
-    time.sleep(5)
-    search_result = WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable(
-            (
-                By.XPATH,
-                "//div[@id='searchHeader']",
-            )
-        )
-    )
-    search_output = search_result.text
+    search_data(driver, search_param)
+    if int(start_page) > 0:
+        navigate_to_start_page(driver, int(start_page))
     shop_data = []
-    print(search_output)
     isNext = True
     while isNext:
         url = driver.current_url
