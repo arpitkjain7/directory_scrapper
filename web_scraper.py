@@ -61,19 +61,22 @@ def navigate_to_start_page(driver, start_page):
 
 
 def get_basic_details(driver, idx):
-    shop_name = driver.find_element_by_xpath(
-        f"//div[@id='searchResults']/div[{idx}]/div[1]"
-    ).text
-    shop_city = driver.find_element_by_xpath(
-        f"//div[@id='searchResults']/div[{idx}]/div[5]"
-    ).text
-    shop_state = driver.find_element_by_xpath(
-        f"//div[@id='searchResults']/div[{idx}]/div[7]"
-    ).text
-    driver.find_element_by_xpath(
-        f"//div[@id='searchResults']/div[{idx}]/div[10]/a/input"
-    ).send_keys("\n")
-    return shop_name, shop_city, shop_state
+    try:
+        shop_name = driver.find_element_by_xpath(
+            f"//div[@id='searchResults']/div[{idx}]/div[1]"
+        ).text
+        shop_city = driver.find_element_by_xpath(
+            f"//div[@id='searchResults']/div[{idx}]/div[5]"
+        ).text
+        shop_state = driver.find_element_by_xpath(
+            f"//div[@id='searchResults']/div[{idx}]/div[7]"
+        ).text
+        driver.find_element_by_xpath(
+            f"//div[@id='searchResults']/div[{idx}]/div[10]/a/input"
+        ).send_keys("\n")
+        return shop_name, shop_city, shop_state, True
+    except:
+        return None, None, None, False
 
 
 def get_phone_number(driver):
@@ -125,20 +128,38 @@ def get_phone_number(driver):
         shop_phone_number_1 = driver.find_element_by_xpath(
             "//div[@id='phoneNumbers']/a"
         ).text
-        print(shop_phone_number_1)
+        try:
+            shop_phone_number_2 = driver.find_element_by_xpath(
+                "//div[@id='phoneNumbers']/a/following-sibling::a"
+            ).text
+        except:
+            return shop_phone_number_1, shop_phone_number_2, True
+        # for value in shop_phone_number_list:
+        #     shop_phone_number.append(value.text)
+        #     print(shop_phone_number)
+        return shop_phone_number_1, shop_phone_number_2, True
     except:
-        return shop_phone_number_1, shop_phone_number_2
+        return shop_phone_number_1, shop_phone_number_2, False
+
+
+def navigate_to_next_page(page_num, driver, current_url):
+    next_page_num = int(page_num) + 1
+    next_page_num_url = current_url.replace(str(page_num), str(next_page_num))
+    # navigate_to_start_page(driver, int(start_page))
+    driver.get(next_page_num_url)
+    time.sleep(5)
     try:
-        shop_phone_number_2 = driver.find_element_by_xpath(
-            "//div[@id='phoneNumbers']/a/following-sibling::a"
-        ).text
-        print(shop_phone_number_2)
-    except:
-        return shop_phone_number_1, shop_phone_number_2
-    # for value in shop_phone_number_list:
-    #     shop_phone_number.append(value.text)
-    #     print(shop_phone_number)
-    return shop_phone_number_1, shop_phone_number_2
+        driver.find_element_by_xpath(
+            "//div[text()='Website search is under maintenance. We will be back in few minutes.']"
+        )
+        isNext = False
+        print("No more records")
+    except NoSuchElementException:
+        print(f"Navigating to page number {next_page_num}")
+        isNext = True
+    print(f"{isNext=}")
+    time.sleep(5)
+    return isNext
 
 
 def Extract_Data(search_param: str, batch_id: str, start_page=1, headless=False):
@@ -164,8 +185,13 @@ def Extract_Data(search_param: str, batch_id: str, start_page=1, headless=False)
         print(url)
         for i in range(1, 13):
             page_num = url.split("page=")[-1]
-            shop_name, shop_city, shop_state = get_basic_details(driver, i)
-            shop_phone_number_1, shop_phone_number_2 = get_phone_number(driver)
+            shop_name, shop_city, shop_state, isNext = get_basic_details(driver, i)
+            if not isNext:
+                break
+            print(f"Extracting data for {shop_name}")
+            shop_phone_number_1, shop_phone_number_2, isNext = get_phone_number(driver)
+            if not isNext:
+                break
             shop_data.append(
                 [
                     shop_name,
@@ -180,25 +206,18 @@ def Extract_Data(search_param: str, batch_id: str, start_page=1, headless=False)
             # driver.back()
             driver.get(url)
             time.sleep(5)
-        next_button = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable(
-                (
-                    By.XPATH,
-                    "//a[text()='Next']",
-                )
-            )
-        )
-        next_button.send_keys("\n")
-        time.sleep(5)
-        try:
-            driver.find_element_by_xpath(
-                "//div[text()='Website search is under maintenance. We will be back in few minutes.']"
-            )
-            isNext = False
-        except NoSuchElementException:
-            print("Navigating to next page")
-        print(f"{isNext=}")
-        time.sleep(5)
+        if isNext:
+            isNext = navigate_to_next_page(page_num, driver, url)
+        # next_button = WebDriverWait(driver, 10).until(
+        #     EC.element_to_be_clickable(
+        #         (
+        #             By.XPATH,
+        #             "//a[text()='Next']",
+        #         )
+        #     )
+        # )
+        # next_button.send_keys("\n")
+        # time.sleep(5)
         # print(f"{shop_data=}")
     driver.close()
     return shop_data

@@ -23,8 +23,9 @@ batch_id = str(int(datetime.now().timestamp() * 1000))
 # updated_list.append(["phone number", "url", "file_path", "comments"])
 # for item in user_list:
 #     print(f"{item[0]=}")
+search_spec = args["searchspec"]
 out_data = Extract_Data(
-    search_param=args["searchspec"],
+    search_param=search_spec,
     batch_id=batch_id,
     start_page=args["startpage"],
     headless=args["async"],
@@ -44,5 +45,9 @@ df = pd.DataFrame(
     ],
 )
 # print(f"{updated_df}")
-df.to_csv(os.path.join("output", f"{batch_id}.csv"), index=False, header=True)
+df.to_csv(
+    os.path.join("output", f"{search_spec}_{batch_id[-4:]}.csv"),
+    index=False,
+    header=True,
+)
 # driver.close()
